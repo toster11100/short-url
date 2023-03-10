@@ -10,8 +10,8 @@ import (
 
 type server struct {
 	urlMap  map[int]string
-	Addr    string
-	Handler http.Handler
+	addr    string
+	handler http.Handler
 	count   int
 }
 
@@ -20,21 +20,21 @@ func Mew() *server {
 
 	myServer := &server{
 		urlMap:  make(map[int]string),
-		Addr:    ":8080",
-		Handler: mux,
+		addr:    ":8080",
+		handler: mux,
 		count:   1,
 	}
-	mux.HandleFunc("/", myServer.CheckMethod)
+	mux.HandleFunc("/", myServer.checkMethod)
 	return myServer
 }
 
-func (s *server) CheckMethod(w http.ResponseWriter, r *http.Request) {
+func (s *server) checkMethod(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		s.CreateShortURL(w, r)
+		s.createShortURL(w, r)
 		return
 	case http.MethodGet:
-		s.RedirectToLongURL(w, r)
+		s.redirectToLongURL(w, r)
 		return
 	default:
 		http.Error(w, "invalid method ", http.StatusBadRequest)
@@ -42,7 +42,7 @@ func (s *server) CheckMethod(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *server) CreateShortURL(w http.ResponseWriter, r *http.Request) {
+func (s *server) createShortURL(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -62,7 +62,7 @@ func (s *server) CreateShortURL(w http.ResponseWriter, r *http.Request) {
 	s.count++
 }
 
-func (s *server) RedirectToLongURL(w http.ResponseWriter, r *http.Request) {
+func (s *server) redirectToLongURL(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path[1:]
 
 	id, err := strconv.Atoi(path)
@@ -71,13 +71,13 @@ func (s *server) RedirectToLongURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	longUrl := s.urlMap[id]
-	w.Header().Set("Location", longUrl)
+	longURL := s.urlMap[id]
+	w.Header().Set("Location", longURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 func (s server) Start() error {
-	err := http.ListenAndServe(s.Addr, s.Handler)
+	err := http.ListenAndServe(s.addr, s.handler)
 	if err != nil {
 		return err
 	}
