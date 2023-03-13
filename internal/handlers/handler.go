@@ -12,8 +12,8 @@ import (
 )
 
 type Repositories interface {
-	ReadUrl(int) string
-	WriteUrl(string, int)
+	ReadURL(int) string
+	WriteURL(string, int)
 }
 
 type Server struct {
@@ -64,7 +64,7 @@ func (s *Server) createShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.urlMap.WriteUrl(strBody, s.id)
+	s.urlMap.WriteURL(strBody, s.id)
 
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprint(w, "http://localhost:8080/"+strconv.Itoa(s.id))
@@ -75,12 +75,12 @@ func (s *Server) redirectToLongURL(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path[1:]
 
 	id, err := strconv.Atoi(path)
-	if err != nil || id <= 0 || s.urlMap.ReadUrl(id) == "" {
+	if err != nil || id <= 0 || s.urlMap.ReadURL(id) == "" {
 		http.Error(w, "invalid short id", http.StatusBadRequest)
 		return
 	}
 
-	longURL := s.urlMap.ReadUrl(id)
+	longURL := s.urlMap.ReadURL(id)
 
 	w.Header().Set("Location", longURL)
 	w.WriteHeader(http.StatusTemporaryRedirect)

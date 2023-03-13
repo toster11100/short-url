@@ -7,10 +7,10 @@ func New() Rep {
 	return rep
 }
 
-func (r Rep) ReadUrl(id int) string {
+func (r Rep) ReadURL(id int) string {
 	return r[id]
 }
 
-func (r Rep) WriteUrl(url string, id int) {
+func (r Rep) WriteURL(url string, id int) {
 	r[id] = url
 }
