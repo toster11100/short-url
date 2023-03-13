@@ -3,11 +3,11 @@ package main
 import (
 	"log"
 
-	"github.com/toster11100/shortUrl.git/internal/app"
+	"github.com/toster11100/shortUrl.git/internal/server"
 )
 
 func main() {
-	a := app.Mew()
+	a := server.New()
 	err := a.Start()
 	if err != nil {
 		log.Fatal(err)
