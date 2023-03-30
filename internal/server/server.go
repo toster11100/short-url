@@ -10,17 +10,17 @@ import (
 	"github.com/toster11100/shortUrl.git/internal/storage"
 )
 
-type server struct {
+type Server struct {
 	addr    string
 	handler http.Handler
 	srv     http.Server
 }
 
-func New() *server {
+func New() *Server {
 	repo := storage.New()
 	hand := handlers.New(repo)
 
-	Server := &server{
+	Server := &Server{
 		addr:    ":8080",
 		handler: hand,
 		srv:     http.Server{},
@@ -29,7 +29,7 @@ func New() *server {
 	return Server
 }
 
-func (s *server) Start() error {
+func (s *Server) Start() error {
 	log.Println("starting server")
 	err := http.ListenAndServe(s.addr, s.handler)
 	if err != nil && err != http.ErrServerClosed {
@@ -38,7 +38,7 @@ func (s *server) Start() error {
 	return nil
 }
 
-func (s *server) Stop() error {
+func (s *Server) Stop() error {
 	log.Println("stopping server")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
