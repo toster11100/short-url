@@ -8,19 +8,19 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 
 	"github.com/gorilla/mux"
 )
 
 type Repositories interface {
 	ReadURL(int) (string, error)
-	WriteURL(string) string
+	WriteURL(string) int
 }
 
 type Server struct {
 	urlMap  Repositories
 	handler http.Handler
+	cfg     string
 }
 
 type ShortJSON struct {
@@ -28,11 +28,12 @@ type ShortJSON struct {
 	Result string `json:"result,omitempty"`
 }
 
-func New(storage Repositories) *Server {
+func New(storage Repositories, config string) *Server {
 	router := mux.NewRouter()
 	myServer := &Server{
 		urlMap:  storage,
 		handler: router,
+		cfg:     config,
 	}
 	router.HandleFunc("/", myServer.createShortURL).Methods(http.MethodPost)
 	router.HandleFunc("/api/shorten", myServer.shortenJSON).Methods(http.MethodPost)
@@ -54,7 +55,7 @@ func (s *Server) createShortURL(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	strBody := strings.TrimRight(string(requestBody), "\n")
+	strBody := string(requestBody)
 	if _, err = url.ParseRequestURI(strBody); err != nil {
 		err := fmt.Errorf("this \"%s\" is not URL", strBody)
 		log.Println(err)
@@ -62,7 +63,8 @@ func (s *Server) createShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortenedURL := s.urlMap.WriteURL(strBody)
+	id := s.urlMap.WriteURL(strBody)
+	shortenedURL := fmt.Sprintf("%v/%v", s.cfg, id)
 
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusCreated)
@@ -116,9 +118,10 @@ func (s *Server) shortenJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	shortenedURL := s.urlMap.WriteURL(requestBodyJSON.URL)
+	url := fmt.Sprintf("%v/%v", s.cfg, shortenedURL)
 
 	requestBodyJSON = ShortJSON{
-		Result: shortenedURL,
+		Result: url,
 	}
 	responseBody, err := json.Marshal(requestBodyJSON)
 	if err != nil {
@@ -129,5 +132,5 @@ func (s *Server) shortenJSON(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write(responseBody)
+	fmt.Fprint(w, string(responseBody))
 }

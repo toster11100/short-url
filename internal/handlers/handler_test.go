@@ -14,7 +14,7 @@ import (
 
 func TestServer_createShortURL(t *testing.T) {
 	repo := storage.New()
-	srv := New(repo)
+	srv := New(repo, "http://localhost:8080")
 	tests := []struct {
 		name            string
 		target          string

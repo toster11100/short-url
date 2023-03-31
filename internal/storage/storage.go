@@ -31,12 +31,11 @@ func (r *Rep) ReadURL(id int) (string, error) {
 	return "", err
 }
 
-func (r *Rep) WriteURL(url string) string {
+func (r *Rep) WriteURL(url string) int {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	r.id++
 	r.URLMap[r.id] = url
 	log.Println("added URL with ID", r.id, "to URLMap:", url)
-	res := fmt.Sprint("http://localhost:8080/", r.id)
-	return res
+	return r.id
 }
