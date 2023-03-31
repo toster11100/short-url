@@ -6,39 +6,40 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/toster11100/shortUrl.git/internal/config"
 	"github.com/toster11100/shortUrl.git/internal/handlers"
 	"github.com/toster11100/shortUrl.git/internal/storage"
 )
 
-type server struct {
-	addr    string
+type Server struct {
 	handler http.Handler
 	srv     http.Server
+	config  string
 }
 
-func New() *server {
+func New(config *config.Config) *Server {
 	repo := storage.New()
-	hand := handlers.New(repo)
+	hand := handlers.New(repo, config.BaseURL)
 
-	Server := &server{
-		addr:    ":8080",
+	Server := &Server{
 		handler: hand,
 		srv:     http.Server{},
+		config:  config.Addr,
 	}
 
 	return Server
 }
 
-func (s *server) Start() error {
-	log.Println("starting server")
-	err := http.ListenAndServe(s.addr, s.handler)
+func (s *Server) Start() error {
+	log.Printf("starting server to addres %s", s.config)
+	err := http.ListenAndServe(s.config, s.handler)
 	if err != nil && err != http.ErrServerClosed {
 		return err
 	}
 	return nil
 }
 
-func (s *server) Stop() error {
+func (s *Server) Stop() error {
 	log.Println("stopping server")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
