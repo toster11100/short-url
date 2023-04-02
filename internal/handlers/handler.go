@@ -14,7 +14,7 @@ import (
 
 type Repositories interface {
 	ReadURL(int) (string, error)
-	WriteURL(string) int
+	WriteURL(string) (int, error)
 }
 
 type Server struct {
@@ -63,7 +63,12 @@ func (s *Server) createShortURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := s.urlMap.WriteURL(strBody)
+	id, err := s.urlMap.WriteURL(strBody)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	shortenedURL := fmt.Sprintf("%v/%v", s.cfg, id)
 
 	w.Header().Set("Content-Type", "text/html")
@@ -117,7 +122,12 @@ func (s *Server) shortenJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortenedURL := s.urlMap.WriteURL(requestBodyJSON.URL)
+	shortenedURL, err := s.urlMap.WriteURL(requestBodyJSON.URL)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	url := fmt.Sprintf("%v/%v", s.cfg, shortenedURL)
 
 	requestBodyJSON = ShortJSON{

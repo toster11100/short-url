@@ -9,6 +9,7 @@ import (
 	"github.com/toster11100/shortUrl.git/internal/config"
 	"github.com/toster11100/shortUrl.git/internal/handlers"
 	"github.com/toster11100/shortUrl.git/internal/storage"
+	storagepath "github.com/toster11100/shortUrl.git/internal/storage_path"
 )
 
 type Server struct {
@@ -18,7 +19,13 @@ type Server struct {
 }
 
 func New(config *config.Config) *Server {
-	repo := storage.New()
+	var repo handlers.Repositories
+	if config.StoragePath != "" {
+		repo = storagepath.New(config.StoragePath)
+	} else {
+		repo = storage.New()
+	}
+
 	hand := handlers.New(repo, config.BaseURL)
 
 	Server := &Server{
