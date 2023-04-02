@@ -3,6 +3,7 @@ module github.com/toster11100/shortUrl.git
 go 1.20
 
 require (
+	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/go-playground/assert/v2 v2.2.0
 	github.com/gorilla/mux v1.8.0
 	github.com/stretchr/testify v1.8.2

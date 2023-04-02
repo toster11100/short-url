@@ -6,21 +6,21 @@ import (
 	"sync"
 )
 
-type rep struct {
+type Rep struct {
 	URLMap map[int]string
 	mutex  *sync.RWMutex
 	id     int
 }
 
-func New() *rep {
-	return &rep{
+func New() *Rep {
+	return &Rep{
 		URLMap: make(map[int]string),
 		mutex:  &sync.RWMutex{},
 		id:     0,
 	}
 }
 
-func (r *rep) ReadURL(id int) (string, error) {
+func (r *Rep) ReadURL(id int) (string, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	if str, ok := r.URLMap[id]; ok {
@@ -31,11 +31,11 @@ func (r *rep) ReadURL(id int) (string, error) {
 	return "", err
 }
 
-func (r *rep) WriteURL(url string) int {
+func (r *Rep) WriteURL(url string) (int, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	r.id++
 	r.URLMap[r.id] = url
 	log.Println("added URL with ID", r.id, "to URLMap:", url)
-	return r.id
+	return r.id, nil
 }
