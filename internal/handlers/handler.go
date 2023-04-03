@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -28,6 +30,11 @@ type ShortJSON struct {
 	Result string `json:"result,omitempty"`
 }
 
+type gzipWriter struct {
+	http.ResponseWriter
+	Writer io.Writer
+}
+
 func New(storage Repositories, config string) *Server {
 	router := mux.NewRouter()
 	myServer := &Server{
@@ -44,6 +51,45 @@ func New(storage Repositories, config string) *Server {
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.handler.ServeHTTP(w, r)
+}
+
+func (w *gzipWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
+
+func GzipHandle(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			handler.ServeHTTP(w, r)
+			return
+		}
+
+		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+			gzr, err := gzip.NewReader(r.Body)
+			if err != nil {
+				log.Println("failed gzip reader:", err)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			defer gzr.Close()
+			r.Body = http.MaxBytesReader(w, gzr, r.ContentLength)
+		}
+
+		gz, err := gzip.NewWriterLevel(w, gzip.BestCompression)
+		if err != nil {
+			log.Println("failed gzip writer:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer gz.Close()
+
+		w.Header().Set("Content-Encoding", "gzip")
+		gw := &gzipWriter{
+			ResponseWriter: w,
+			Writer:         gz,
+		}
+		handler.ServeHTTP(gw, r)
+	})
 }
 
 func (s *Server) createShortURL(w http.ResponseWriter, r *http.Request) {
@@ -111,7 +157,7 @@ func (s *Server) shortenJSON(w http.ResponseWriter, r *http.Request) {
 	requestBodyJSON := ShortJSON{}
 
 	if err := json.Unmarshal(requestBody, &requestBodyJSON); err != nil {
-		log.Println("error unmarshaling JSON", err)
+		log.Println("error unmarshaling JSON:", err)
 		http.Error(w, "invalid data JSON", http.StatusBadRequest)
 		return
 	}
@@ -135,7 +181,7 @@ func (s *Server) shortenJSON(w http.ResponseWriter, r *http.Request) {
 	}
 	responseBody, err := json.Marshal(requestBodyJSON)
 	if err != nil {
-		log.Println("error marshaling JSON", err)
+		log.Println("error marshaling JSON:", err)
 		http.Error(w, "invalid data JSON", http.StatusInternalServerError)
 		return
 	}

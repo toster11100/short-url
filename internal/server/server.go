@@ -39,7 +39,7 @@ func New(config *config.Config) *Server {
 
 func (s *Server) Start() error {
 	log.Printf("starting server to addres %s", s.config)
-	err := http.ListenAndServe(s.config, s.handler)
+	err := http.ListenAndServe(s.config, handlers.GzipHandle(s.handler))
 	if err != nil && err != http.ErrServerClosed {
 		return err
 	}

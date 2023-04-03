@@ -133,6 +133,7 @@ func (r *Rep) WriteURL(url string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("failed to open file")
 	}
+
 	if fileInfo.Size() == 0 {
 		r.storage.URL = append(r.storage.URL, URLInfo{ID: r.storage.Max, URL: url})
 	} else {
