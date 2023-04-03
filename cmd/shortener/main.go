@@ -6,11 +6,17 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/toster11100/shortUrl.git/internal/config"
 	"github.com/toster11100/shortUrl.git/internal/server"
 )
 
 func main() {
-	a := server.New()
+	cfg, err := config.New()
+	if err != nil {
+		log.Fatalf("error parsing addres %s", err)
+		return
+	}
+	a := server.New(cfg)
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
